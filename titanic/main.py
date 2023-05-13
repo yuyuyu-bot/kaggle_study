@@ -3,7 +3,7 @@ import sklearn.tree
 import sklearn.metrics
 
 
-def preprocess_data(data):
+def preprocess_data(data: pandas.DataFrame):
     data["Age"] = data["Age"].fillna(data["Age"].median())
     data = data.dropna(subset=["Embarked"])
     data = data.drop("Cabin", axis=1)
