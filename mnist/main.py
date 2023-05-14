@@ -38,10 +38,10 @@ class Model(torch.nn.Module):
         self.relu = torch.nn.ReLU()
         self.pool = torch.nn.MaxPool2d(2, stride=2)
 
-        self.conv1 = torch.nn.Conv2d(1, 16, 3)
-        self.conv2 = torch.nn.Conv2d(16, 32, 3)
+        self.conv1 = torch.nn.Conv2d(1, 16, 3, padding=1)
+        self.conv2 = torch.nn.Conv2d(16, 32, 3, padding=1)
 
-        self.fc1 = torch.nn.Linear(32 * 5 * 5, 120)
+        self.fc1 = torch.nn.Linear(32 * 7 * 7, 120)
         self.fc2 = torch.nn.Linear(120, 10)
 
     def forward(self, x):
@@ -76,7 +76,7 @@ def train(train_data):
     # data loader
     train_data_loader = torch.utils.data.DataLoader(train_data, batch_size=100, shuffle=True)
 
-    for epoch in range(1):
+    for epoch in range(100):
         for (images, labels) in train_data_loader:
             labels = labels.to(device)
             images = images.to(device)
@@ -105,7 +105,8 @@ def main():
     result = result.to("cpu").detach().numpy()
 
     result = pandas.DataFrame(
-        result, pandas.Series(numpy.arange(1, result.shape[0] + 1), name="ImageId"), columns=["Label"])
+        result, pandas.Series(numpy.arange(1, result.shape[0] + 1), name="ImageId"),
+        columns=["Label"])
     result.to_csv("result.csv")
 
 
