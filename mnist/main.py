@@ -39,7 +39,8 @@ class Model(torch.nn.Module):
         self.pool = torch.nn.MaxPool2d(2, stride=2)
 
         self.conv1 = torch.nn.Conv2d(1, 16, 3, padding=1)
-        self.conv2 = torch.nn.Conv2d(16, 32, 3, padding=1)
+        self.conv2 = torch.nn.Conv2d(16, 16, 3, padding=1)
+        self.conv3 = torch.nn.Conv2d(16, 32, 3, padding=1)
 
         self.fc1 = torch.nn.Linear(32 * 7 * 7, 120)
         self.fc2 = torch.nn.Linear(120, 10)
@@ -49,6 +50,7 @@ class Model(torch.nn.Module):
         x = self.relu(x)
         x = self.pool(x)
         x = self.conv2(x)
+        x = self.conv3(x)
         x = self.relu(x)
         x = self.pool(x)
         x = x.view(x.size()[0], -1)
@@ -71,7 +73,8 @@ def train(train_data):
     model = Model()
     model = model.to(device)
     criterion = torch.nn.CrossEntropyLoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.0001, momentum=0.9, weight_decay=0.005)
+    # optimizer = torch.optim.SGD(model.parameters(), lr=0.0001, momentum=0.9, weight_decay=0.005)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=0.005)
 
     # data loader
     train_data_loader = torch.utils.data.DataLoader(train_data, batch_size=100, shuffle=True)
