@@ -1,5 +1,5 @@
 import pandas
-import sklearn.tree
+import sklearn.linear_model
 import sklearn.metrics
 
 
@@ -119,12 +119,16 @@ def main():
     train_features = train[train.columns[train.columns != "SalePrice"]]
     train_target = train["SalePrice"]
 
-    model = sklearn.tree.ExtraTreeRegressor()
+    model = sklearn.linear_model.Lasso(max_iter=int(1e5))
     model.fit(train_features, train_target)
-    train_predicted = model.predict(train_features)
-    print(sklearn.metrics.accuracy_score(train_target, train_predicted))
+    train_predicted = model.predict(train_features).astype(int)
 
-    test_predicted = model.predict(test)
+    error = 0
+    for (pred, target) in zip(train_predicted, train_target):
+        error += abs(pred - target)
+    print(error / len(train_target))
+
+    test_predicted = model.predict(test).astype(int)
     result = pandas.DataFrame(test_predicted, test["Id"], columns=["SalePrice"])
     result.to_csv("result.csv", index_label=["Id"])
 
