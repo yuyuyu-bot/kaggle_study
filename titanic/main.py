@@ -1,6 +1,10 @@
+import numpy
 import pandas
-import sklearn.tree
 import sklearn.metrics
+import torch
+import torch.nn
+import torch.optim
+import torch.utils
 
 
 def preprocess_data(data: pandas.DataFrame):
@@ -21,6 +25,30 @@ def preprocess_data(data: pandas.DataFrame):
     return data
 
 
+class Model(torch.nn.Module):
+    def __init__(self) -> None:
+        super(Model, self).__init__()
+        self.relu = torch.nn.ReLU()
+        self.fc1 = torch.nn.Linear(6, 12)
+        self.fc2 = torch.nn.Linear(12, 6)
+        self.fc3 = torch.nn.Linear(6, 6)
+        self.fc4 = torch.nn.Linear(6, 2)
+
+    def forward(self, x):
+        x = self.fc1(x)
+        x = self.relu(x)
+        x = self.fc2(x)
+        x = self.relu(x)
+        x = self.fc3(x)
+        x = self.relu(x)
+        x = self.fc3(x)
+        x = self.relu(x)
+        x = self.fc3(x)
+        x = self.relu(x)
+        x = self.fc4(x)
+        return x
+
+
 def main():
     train = pandas.read_csv("data/train.csv")
     test = pandas.read_csv("data/test.csv")
@@ -32,14 +60,37 @@ def main():
     train_features = train[feature_labels]
     train_target = train["Survived"]
 
-    model = sklearn.tree.ExtraTreeClassifier()
-    model.fit(train_features, train_target)
-    train_predicted = model.predict(train_features)
-    print(sklearn.metrics.accuracy_score(train_target, train_predicted))
+    model = Model()
+    criterion = torch.nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=0.005)
+
+    print(train_features)
+    train_data = []
+    for (data, label) in zip(train_features.to_numpy(), train_target):
+        train_data.append([torch.from_numpy(data.astype(numpy.float32)), label])
+
+    # data loader
+    train_data_loader = torch.utils.data.DataLoader(train_data, batch_size=1000, shuffle=True)
+
+    for epoch in range(100000):
+        for (data, labels) in train_data_loader:
+            optimizer.zero_grad()
+            outputs = model(data)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+            print(f"epoch: {epoch}, loss: {loss}")
+
+    result = model(torch.from_numpy(train_features.to_numpy().astype(numpy.float32)))
+    result = torch.argmax(result, dim=1)
+    result = result.detach().numpy()
+    print(sklearn.metrics.accuracy_score(train_target, result))
 
     test_features = test[feature_labels]
-    test_predicted = model.predict(test_features)
-    result = pandas.DataFrame(test_predicted, test["PassengerId"], columns=["Survived"])
+    result = model(torch.from_numpy(test_features.to_numpy().astype(numpy.float32)))
+    result = torch.argmax(result, dim=1)
+    result = result.detach().numpy()
+    result = pandas.DataFrame(result, test["PassengerId"], columns=["Survived"])
     result.to_csv("result.csv", index_label=["PassengerId"])
 
 
