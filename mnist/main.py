@@ -34,7 +34,7 @@ def preprocess_test_data(data: pandas.DataFrame):
 
 class Model(torch.nn.Module):
     def __init__(self):
-        super(Model, self,).__init__()
+        super(Model, self).__init__()
         self.relu = torch.nn.ReLU()
         self.pool = torch.nn.MaxPool2d(2, stride=2)
 
