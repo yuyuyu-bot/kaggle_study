@@ -4,6 +4,7 @@ import torch
 import torch.nn
 import torch.optim
 import torch.utils
+import torchvision
 
 
 def preprocess_train_data(data: pandas.DataFrame):
@@ -35,29 +36,22 @@ def preprocess_test_data(data: pandas.DataFrame):
 class Model(torch.nn.Module):
     def __init__(self):
         super(Model, self).__init__()
-        self.relu = torch.nn.ReLU()
-        self.pool = torch.nn.MaxPool2d(2, stride=2)
-
-        self.conv1 = torch.nn.Conv2d(1, 16, 3, padding=1)
-        self.conv2 = torch.nn.Conv2d(16, 16, 3, padding=1)
-        self.conv3 = torch.nn.Conv2d(16, 32, 3, padding=1)
-
-        self.fc1 = torch.nn.Linear(32 * 7 * 7, 120)
-        self.fc2 = torch.nn.Linear(120, 10)
+        self.network = torchvision.models.resnet18(pretrained=True)
+        self.network.conv1 = torch.nn.Conv2d(
+            in_channels=1,
+            out_channels=64,
+            kernel_size=self.network.conv1.kernel_size,
+            stride=self.network.conv1.stride,
+            padding=self.network.conv1.padding,
+            bias=False
+        )
+        self.network.fc = torch.nn.Linear(
+            in_features=self.network.fc.in_features,
+            out_features=10
+        )
 
     def forward(self, x):
-        x = self.conv1(x)
-        x = self.relu(x)
-        x = self.pool(x)
-        x = self.conv2(x)
-        x = self.conv3(x)
-        x = self.relu(x)
-        x = self.pool(x)
-        x = x.view(x.size()[0], -1)
-        x = self.fc1(x)
-        x = self.relu(x)
-        x = self.fc2(x)
-        return x
+        return self.network(x)
 
 
 def train(train_data):
@@ -73,13 +67,12 @@ def train(train_data):
     model = Model()
     model = model.to(device)
     criterion = torch.nn.CrossEntropyLoss()
-    # optimizer = torch.optim.SGD(model.parameters(), lr=0.0001, momentum=0.9, weight_decay=0.005)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=0.005)
 
     # data loader
     train_data_loader = torch.utils.data.DataLoader(train_data, batch_size=100, shuffle=True)
 
-    for epoch in range(100):
+    for epoch in range(30):
         for (images, labels) in train_data_loader:
             labels = labels.to(device)
             images = images.to(device)
